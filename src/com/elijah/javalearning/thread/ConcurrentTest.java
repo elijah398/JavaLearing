@@ -2,9 +2,57 @@ package com.elijah.javalearning.thread;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ConcurrentTest {
+
+    public void testWaitAndNotify() {
+        ReentrantLock lock = new ReentrantLock();
+        Condition newCondition = lock.newCondition();
+        Product product = new Product(lock,newCondition);
+        Consumer consumer = new Consumer(lock,newCondition);
+        for(int i=0;i<3;i++){
+            ThreadProduct pThread = new ThreadProduct(product);
+            ThreadConsumer cThread = new ThreadConsumer(consumer);
+            pThread.start();
+            cThread.start();
+        }
+    }
+
+    private static class ThreadProduct extends Thread{
+        private Product product;
+
+        public ThreadProduct(Product product) {
+            super();
+            this.product = product;
+        }
+        @Override
+        public void run() {
+            //死循环，不断的生产
+            while(true){
+                product.setValue();
+            }
+        }
+
+    }
+
+    private static class ThreadConsumer extends Thread{
+        private Consumer consumer;
+
+        public ThreadConsumer(Consumer consumer) {
+            super();
+            this.consumer = consumer;
+        }
+        @Override
+        public void run() {
+            //死循环，不断的消费
+            while(true){
+                consumer.getValue();
+            }
+        }
+
+    }
 
     //测试可见性
     public void testVisibility() {
@@ -62,7 +110,7 @@ public class ConcurrentTest {
 
         //卖出一个商品
         public void saleOne(){
-            this.goodNumber = goodNumber--;
+            this.goodNumber--;
         }
 
         /*
@@ -80,6 +128,7 @@ public class ConcurrentTest {
 
         //AtomicInteger，具备原子性
         AtomicInteger ai = new AtomicInteger(1);
+
         public void addGoodsByAtomic() {
             ai.getAndIncrement();
         }
@@ -98,7 +147,5 @@ public class ConcurrentTest {
                 System.out.println(Thread.currentThread().getName() + "reentrantLock->unlock");
             }
         }
-
     }
-
 }
